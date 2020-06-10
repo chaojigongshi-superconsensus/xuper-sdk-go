@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 
-	"github.com/xuperchain/xuper-sdk-go/crypto"
-	"github.com/xuperchain/xuper-sdk-go/pb"
+	"github.com/jason-cn-dev/xuper-sdk-go/crypto"
+	"github.com/jason-cn-dev/xuper-sdk-go/pb"
 )
 
 // MakeTransactionID 事务id生成

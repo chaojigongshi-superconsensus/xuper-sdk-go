@@ -1,3 +1,8 @@
+# About
+
+This depository is a fork of xuper-sdk-go. Fix non utxo mode.
+
+For the original [xuper-sdk-go](https://github.com/xuperchain/xuper-sdk-go) depository, please click the link.
 
 # Xuper-SDK XuperUnion Client SDK for Go
 This SDK enables Go developers to build solutions that interact with open chain network of XuperUnion.

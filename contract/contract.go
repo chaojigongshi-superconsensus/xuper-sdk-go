@@ -11,10 +11,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/xuper-sdk-go/account"
-	"github.com/xuperchain/xuper-sdk-go/config"
-	"github.com/xuperchain/xuper-sdk-go/pb"
-	"github.com/xuperchain/xuper-sdk-go/xchain"
+	"github.com/jason-cn-dev/xuper-sdk-go/account"
+	"github.com/jason-cn-dev/xuper-sdk-go/config"
+	"github.com/jason-cn-dev/xuper-sdk-go/pb"
+	"github.com/jason-cn-dev/xuper-sdk-go/xchain"
 )
 
 // WasmContract wasmContract structure

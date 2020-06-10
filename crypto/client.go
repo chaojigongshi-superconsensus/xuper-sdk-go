@@ -6,7 +6,7 @@ package crypto
 import (
 	//	"github.com/xuperchain/crypto/client/service/gm"
 	"github.com/xuperchain/crypto/client/service/xchain"
-	//	"github.com/xuperchain/xuper-sdk-go/config"
+	//	"github.com/jason-cn-dev/xuper-sdk-go/config"
 	//	"github.com/xuperchain/xuperchain/core/crypto/client/base"
 )
 

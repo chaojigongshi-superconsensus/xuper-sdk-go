@@ -72,11 +72,11 @@ func GetConfig(configPath string, confName string) *CommConfig {
 
 func SetConfig(checkHost, checkAddr, checkFeeAddr, checkFee string, isNeedCheck, isNeedCheckFee bool, minNewChainAmount string) {
 	commConfig := &CommConfig{
-		EndorseServiceHost: "10.144.94.18:8848",
+		EndorseServiceHost: "127.0.0.1:37101",
 		ComplianceCheck: ComplianceCheckConfig{
 			ComplianceCheckEndorseServiceFee:     10,
-			ComplianceCheckEndorseServiceFeeAddr: "XBbhR82cB6PvaLJs3D4uB9f12bhmKkHeX",
-			ComplianceCheckEndorseServiceAddr:    "TYyA3y8wdFZyzExtcbRNVd7ZZ2XXcfjdw",
+			ComplianceCheckEndorseServiceFeeAddr: "WwLgfAatHyKx2mCJruRaML4oVf7Chzp42",
+			ComplianceCheckEndorseServiceAddr:    "ZUjrEbucZYBxF6U7YJKCuSJYbBQewAMWt",
 		},
 		MinNewChainAmount: "100",
 		Crypto:            CRYPTO_XCHAIN,

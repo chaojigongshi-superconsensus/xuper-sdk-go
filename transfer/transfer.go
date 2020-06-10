@@ -12,12 +12,12 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/xuperchain/xuper-sdk-go/account"
-	"github.com/xuperchain/xuper-sdk-go/common"
-	"github.com/xuperchain/xuper-sdk-go/config"
-	"github.com/xuperchain/xuper-sdk-go/crypto"
-	"github.com/xuperchain/xuper-sdk-go/pb"
-	"github.com/xuperchain/xuper-sdk-go/xchain"
+	"github.com/jason-cn-dev/xuper-sdk-go/account"
+	"github.com/jason-cn-dev/xuper-sdk-go/common"
+	"github.com/jason-cn-dev/xuper-sdk-go/config"
+	"github.com/jason-cn-dev/xuper-sdk-go/crypto"
+	"github.com/jason-cn-dev/xuper-sdk-go/pb"
+	"github.com/jason-cn-dev/xuper-sdk-go/xchain"
 
 	"github.com/xuperchain/crypto/core/utils"
 )
@@ -71,12 +71,12 @@ func (t *Trans) TransferWithDescFile(to, amount, fee, descFilePath string) (stri
 	return txid, err
 }
 
-func (t *Trans) EncryptedTransfer(to, amount, fee, desc, hdPublicKey string) (string, error) {
+func (t *Trans) EncryptedTransfer(to, amount, fee, desc, hdPublicKey string) (string, string, error) {
 	if len(desc) == 0 {
 		hdPublicKey = ""
 	}
-	txid, _, err := t.transfer(to, amount, fee, desc, hdPublicKey)
-	return txid, err
+	txid, gas, err := t.transfer(to, amount, fee, desc, hdPublicKey)
+	return txid, gas, err
 }
 
 // Transfer transfer 'amount' to 'to',and pay 'fee' to miner
@@ -96,8 +96,16 @@ func (t *Trans) transfer(to, amount, fee, desc, hdPublicKey string) (string, str
 		return "", "", common.ErrInvalidAmount
 	}
 	// generate preExe request
-	invokeRequests := []*pb.InvokeRequest{
-		{ModuleName: "transfer", Amount: fee}, //转账请求
+	invokeRequests := []*pb.InvokeRequest{}
+
+	switch desc {
+	case "":
+		invokeRequests = append(invokeRequests, &pb.InvokeRequest{ModuleName: "transfer", Amount: fee})
+	default:
+		//在chain.go中传入的to就是desc描述的链名
+		invokeRequests = append(invokeRequests, &pb.InvokeRequest{ModuleName: "kernel", Args: map[string][]byte{
+			"to": []byte(to), "bcname": []byte(to),
+		}})
 	}
 
 	invokeRPCReq := &pb.InvokeRPCRequest{
@@ -160,7 +168,7 @@ func (t *Trans) transfer(to, amount, fee, desc, hdPublicKey string) (string, str
 		// 获取手续费，重新转账
 		errs := strings.Split(err.Error(), " ")
 		fee = errs[len(errs)-1]
-		return t.Transfer(to, amount, fee, desc)
+		return t.transfer(to, amount, fee, desc, hdPublicKey)
 	}
 
 	if preExeWithSelRes.Response == nil {
@@ -197,7 +205,7 @@ func (t *Trans) transfer(to, amount, fee, desc, hdPublicKey string) (string, str
 }
 
 // Transfer transfer 'amount' to 'to',and pay 'fee' to miner
-func (t *Trans) BatchTransfer(toAddressAndAmount map[string]string, fee, desc string) (string, error) {
+func (t *Trans) BatchTransfer(toAddressAndAmount map[string]string, fee, desc string) (string, string, error) {
 	//	var txOutputs []*pb.TxOutput
 
 	// 求转出和
@@ -206,11 +214,11 @@ func (t *Trans) BatchTransfer(toAddressAndAmount map[string]string, fee, desc st
 	for _, toAmount := range toAddressAndAmount {
 		singleAmountInt64, err := strconv.ParseInt(toAmount, 10, 64)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 
 		if singleAmountInt64 < 0 {
-			return "", errors.New("Transfer amount is negative")
+			return "", "", errors.New("Transfer amount is negative")
 		}
 		//		realToAmount, isSuccess := new(big.Int).SetString(amount, 10)
 		//		if isSuccess != true {
@@ -222,7 +230,9 @@ func (t *Trans) BatchTransfer(toAddressAndAmount map[string]string, fee, desc st
 	}
 
 	// generate preExe request
-	invokeRequests := []*pb.InvokeRequest{}
+	invokeRequests := []*pb.InvokeRequest{
+		{ModuleName: "transfer", Amount: fee}, //转账请求
+	}
 
 	invokeRPCReq := &pb.InvokeRPCRequest{
 		Bcname:    t.ChainName,
@@ -241,10 +251,10 @@ func (t *Trans) BatchTransfer(toAddressAndAmount map[string]string, fee, desc st
 	feeInt64, err := strconv.ParseInt(fee, 10, 64)
 	if err != nil {
 		log.Printf("Transfer fee to int64 err: %v", err)
-		return "", err
+		return "", "", err
 	}
 	if feeInt64 < 0 {
-		return "", errors.New("fee amount is negative")
+		return "", "", errors.New("fee amount is negative")
 	}
 
 	// get extra amount
@@ -285,8 +295,16 @@ func (t *Trans) BatchTransfer(toAddressAndAmount map[string]string, fee, desc st
 	// preExe
 	preExeWithSelRes, err := t.PreExecWithSelecUTXO()
 	if err != nil {
-		log.Printf("Transfer PreExecWithSelecUTXO failed, err: %v", err)
-		return "", err
+		// 判断是否是手续费不够引起的错误
+		if !strings.Contains(err.Error(), common.ErrNeedInputFee) {
+			log.Printf("Transfer PreExecWithSelecUTXO failed, err: %v", err)
+			return "", fee, err
+		}
+
+		// 获取手续费，重新转账
+		errs := strings.Split(err.Error(), " ")
+		fee = errs[len(errs)-1]
+		return t.BatchTransfer(toAddressAndAmount, fee, desc)
 	}
 
 	// populates fields
@@ -314,7 +332,8 @@ func (t *Trans) BatchTransfer(toAddressAndAmount map[string]string, fee, desc st
 	t.AuthRequire = invokeRPCReq.AuthRequire
 
 	// post
-	return t.GenCompleteTxAndPost(preExeWithSelRes, "")
+	txid, err := t.GenCompleteTxAndPost(preExeWithSelRes, "")
+	return txid, fee, err
 }
 
 // QueryTx query tx to get detail information

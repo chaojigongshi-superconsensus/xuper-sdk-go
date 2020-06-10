@@ -16,12 +16,12 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/xuperchain/xuper-sdk-go/account"
-	"github.com/xuperchain/xuper-sdk-go/common"
-	"github.com/xuperchain/xuper-sdk-go/config"
-	"github.com/xuperchain/xuper-sdk-go/crypto"
-	"github.com/xuperchain/xuper-sdk-go/pb"
-	"github.com/xuperchain/xuper-sdk-go/txhash"
+	"github.com/jason-cn-dev/xuper-sdk-go/account"
+	"github.com/jason-cn-dev/xuper-sdk-go/common"
+	"github.com/jason-cn-dev/xuper-sdk-go/config"
+	"github.com/jason-cn-dev/xuper-sdk-go/crypto"
+	"github.com/jason-cn-dev/xuper-sdk-go/pb"
+	"github.com/jason-cn-dev/xuper-sdk-go/txhash"
 	//	"github.com/xuperchain/crypto/core/account"
 )
 
@@ -72,7 +72,7 @@ func (xc *Xchain) PreExecWithSelecUTXO() (*pb.PreExecWithSelectUTXOResponse, err
 	c := pb.NewXendorserClient(conn)
 	endorserResponse, err := c.EndorserCall(ctx, endorserRequest)
 	if err != nil {
-		log.Printf("PreExecWithSelecUTXO EndorserCall failed, err: %v", err)
+		//log.Printf("PreExecWithSelecUTXO EndorserCall failed, err: %v", err)
 		return nil, fmt.Errorf("EndorserCall error! Response is: %v", err)
 	}
 
@@ -84,12 +84,12 @@ func (xc *Xchain) PreExecWithSelecUTXO() (*pb.PreExecWithSelectUTXOResponse, err
 		return nil, err
 	}
 
-	log.Printf("Gas will cost: %v\n", preExecWithSelectUTXOResponse.GetResponse().GetGasUsed())
+	//log.Printf("Gas will cost: %v\n", preExecWithSelectUTXOResponse.GetResponse().GetGasUsed())
 	for _, res := range preExecWithSelectUTXOResponse.GetResponse().GetResponses() {
 		if res.Status >= 400 {
 			return nil, fmt.Errorf("contract error status:%d message:%s", res.Status, res.Message)
 		}
-		log.Printf("contract response: %s\n", string(res.Body))
+		//log.Printf("contract response: %s\n", string(res.Body))
 	}
 
 	return preExecWithSelectUTXOResponse, nil
@@ -845,8 +845,8 @@ func (xc *Xchain) PreExec() (*pb.InvokeRPCResponse, error) {
 		if res.Status >= 400 {
 			return nil, fmt.Errorf("contract error status:%d message:%s", res.Status, res.Message)
 		}
-		log.Printf("contract response: %s\n", string(res.Body))
+		//log.Printf("contract response: %s\n", string(res.Body))
 	}
-	log.Printf("Gas will cost: %v\n", preExeRPCRes.GetResponse().GetGasUsed())
+	//log.Printf("Gas will cost: %v\n", preExeRPCRes.GetResponse().GetGasUsed())
 	return preExeRPCRes, nil
 }

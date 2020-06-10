@@ -9,12 +9,12 @@ import (
 	"log"
 	"math/big"
 
-	"github.com/xuperchain/xuper-sdk-go/account"
-	"github.com/xuperchain/xuper-sdk-go/config"
-	"github.com/xuperchain/xuper-sdk-go/pb"
-	"github.com/xuperchain/xuper-sdk-go/transfer"
-	"github.com/xuperchain/xuper-sdk-go/txhash"
-	"github.com/xuperchain/xuper-sdk-go/xchain"
+	"github.com/jason-cn-dev/xuper-sdk-go/account"
+	"github.com/jason-cn-dev/xuper-sdk-go/config"
+	"github.com/jason-cn-dev/xuper-sdk-go/pb"
+	"github.com/jason-cn-dev/xuper-sdk-go/transfer"
+	"github.com/jason-cn-dev/xuper-sdk-go/txhash"
+	"github.com/jason-cn-dev/xuper-sdk-go/xchain"
 )
 
 var (
@@ -87,13 +87,13 @@ func (c *Chain) CreateChain(desc string) (string, error) {
 	to := descJsonObj.Args.Name
 	amount := c.Trans.Xchain.Cfg.MinNewChainAmount
 	fee := "0"
-	txid, err := c.Trans.Transfer(to, amount, fee, desc)
+	txid, _, err := c.Trans.Transfer(to, amount, fee, desc)
 	if err != nil {
 		log.Printf("create chain err: %v\n", err)
 		return "", err
 	}
 
-	log.Printf("Real txid: %v\n", txid)
+	//log.Printf("Real txid: %v\n", txid)
 	return txid, nil
 }
 

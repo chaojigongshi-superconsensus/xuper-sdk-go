@@ -6,8 +6,8 @@ package account
 import (
 	"log"
 
-	"github.com/xuperchain/xuper-sdk-go/common"
-	"github.com/xuperchain/xuper-sdk-go/crypto"
+	"github.com/jason-cn-dev/xuper-sdk-go/common"
+	"github.com/jason-cn-dev/xuper-sdk-go/crypto"
 )
 
 // Account account structure

@@ -6,7 +6,7 @@ package transfer
 import (
 	"testing"
 
-	"github.com/xuperchain/xuper-sdk-go/account"
+	"github.com/jason-cn-dev/xuper-sdk-go/account"
 )
 
 func TestTransfer(t *testing.T) {

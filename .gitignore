@@ -1,0 +1,13 @@
+# IDE related
+.vscode/
+
+# output files
+output/
+/.project
+
+.settings/
+.idea/
+.null
+
+keys/
+!vendor/*

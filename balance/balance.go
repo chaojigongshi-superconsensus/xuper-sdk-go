@@ -12,9 +12,9 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/xuperchain/xuper-sdk-go/account"
-	"github.com/xuperchain/xuper-sdk-go/config"
-	"github.com/xuperchain/xuper-sdk-go/pb"
+	"github.com/jason-cn-dev/xuper-sdk-go/account"
+	"github.com/jason-cn-dev/xuper-sdk-go/config"
+	"github.com/jason-cn-dev/xuper-sdk-go/pb"
 )
 
 // Chain structure
