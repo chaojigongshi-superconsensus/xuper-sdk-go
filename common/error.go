@@ -19,3 +19,7 @@ var (
 	// ErrAmountNotEnough
 	ErrAmountNotEnough = errors.New("Amount must be bigger than compliancecheck fee which is 10")
 )
+
+const (
+	ErrNeedInputFee = "need input fee"
+)

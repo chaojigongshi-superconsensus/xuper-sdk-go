@@ -473,12 +473,27 @@ func (xc *Xchain) GenRealTxOnly(response *pb.PreExecWithSelectUTXOResponse, hdPu
 	//		}
 	//	}
 
-	utxoOutput := &pb.UtxoOutput{
-		//		UtxoList: utxolist,
-		//		TotalSelected: totalSelected.String(),
-		UtxoList:      response.UtxoOutput.UtxoList,
-		TotalSelected: response.UtxoOutput.TotalSelected,
+	utxoOutput := &pb.UtxoOutput{}
+	totalSelected := big.NewInt(0)
+	var txInputs []*pb.TxInput
+	if response.UtxoOutput != nil {
+		utxoOutput = &pb.UtxoOutput{
+			UtxoList:      response.UtxoOutput.UtxoList,
+			TotalSelected: response.UtxoOutput.TotalSelected,
+		}
+		var ok bool
+		totalSelected, ok = totalSelected.SetString(response.UtxoOutput.TotalSelected, 10)
+		if !ok {
+			return nil, common.ErrInvalidAmount
+		}
+		var err error
+		txInputs, err = xc.GeneratePureTxInputs(utxoOutput)
+		if err != nil {
+			log.Printf("GenRealTx GenerateTxInput failed.")
+			return nil, fmt.Errorf("GenRealTx GenerateTxInput err: %v", err)
+		}
 	}
+
 	totalNeed := big.NewInt(0)
 	amount, ok := big.NewInt(0).SetString(xc.TotalToAmount, 10)
 	if !ok {
@@ -491,11 +506,6 @@ func (xc *Xchain) GenRealTxOnly(response *pb.PreExecWithSelectUTXOResponse, hdPu
 	amount.Add(amount, fee)
 	totalNeed.Add(totalNeed, amount)
 
-	totalSelected, ok := big.NewInt(0).SetString(response.UtxoOutput.TotalSelected, 10)
-	if !ok {
-		return nil, common.ErrInvalidAmount
-	}
-
 	selfAmount := totalSelected.Sub(totalSelected, totalNeed)
 	txOutputs, err := xc.GenerateMultiTxOutputs(selfAmount.String())
 	if err != nil {
@@ -504,11 +514,6 @@ func (xc *Xchain) GenRealTxOnly(response *pb.PreExecWithSelectUTXOResponse, hdPu
 	}
 
 	//	txInputs, deltaTxOutput, err := xc.GenerateTxInput(utxoOutput, totalNeed)
-	txInputs, err := xc.GeneratePureTxInputs(utxoOutput)
-	if err != nil {
-		log.Printf("GenRealTx GenerateTxInput failed.")
-		return nil, fmt.Errorf("GenRealTx GenerateTxInput err: %v", err)
-	}
 
 	//	if deltaTxOutput != nil {
 	//		txOutputs = append(txOutputs, deltaTxOutput)

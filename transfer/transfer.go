@@ -6,6 +6,8 @@ package transfer
 import (
 	"io/ioutil"
 	"log"
+	"strings"
+
 	//	"math/big"
 	"errors"
 	"strconv"
@@ -65,34 +67,38 @@ func (t *Trans) TransferWithDescFile(to, amount, fee, descFilePath string) (stri
 		desc = string(descBytes)
 	}
 
-	return t.Transfer(to, amount, fee, desc)
+	txid, _, err := t.Transfer(to, amount, fee, desc)
+	return txid, err
 }
 
 func (t *Trans) EncryptedTransfer(to, amount, fee, desc, hdPublicKey string) (string, error) {
 	if len(desc) == 0 {
 		hdPublicKey = ""
 	}
-	return t.transfer(to, amount, fee, desc, hdPublicKey)
+	txid, _, err := t.transfer(to, amount, fee, desc, hdPublicKey)
+	return txid, err
 }
 
 // Transfer transfer 'amount' to 'to',and pay 'fee' to miner
-func (t *Trans) Transfer(to, amount, fee, desc string) (string, error) {
+func (t *Trans) Transfer(to, amount, fee, desc string) (string, string, error) {
 	return t.transfer(to, amount, fee, desc, "")
 }
 
 // Transfer transfer 'amount' to 'to',and pay 'fee' to miner
-func (t *Trans) transfer(to, amount, fee, desc, hdPublicKey string) (string, error) {
+func (t *Trans) transfer(to, amount, fee, desc, hdPublicKey string) (string, string, error) {
 	// (total pay amount) = (to amount + fee + checkfee)
 	amount, ok := common.IsValidAmount(amount)
 	if !ok {
-		return "", common.ErrInvalidAmount
+		return "", "", common.ErrInvalidAmount
 	}
 	fee, ok = common.IsValidAmount(fee)
 	if !ok {
-		return "", common.ErrInvalidAmount
+		return "", "", common.ErrInvalidAmount
 	}
 	// generate preExe request
-	invokeRequests := []*pb.InvokeRequest{}
+	invokeRequests := []*pb.InvokeRequest{
+		{ModuleName: "transfer", Amount: fee}, //转账请求
+	}
 
 	invokeRPCReq := &pb.InvokeRPCRequest{
 		Bcname:    t.ChainName,
@@ -104,12 +110,12 @@ func (t *Trans) transfer(to, amount, fee, desc, hdPublicKey string) (string, err
 	amountInt64, err := strconv.ParseInt(amount, 10, 64)
 	if err != nil {
 		log.Printf("Transfer amount to int64 err: %v", err)
-		return "", err
+		return "", "", err
 	}
 	feeInt64, err := strconv.ParseInt(fee, 10, 64)
 	if err != nil {
 		log.Printf("Transfer fee to int64 err: %v", err)
-		return "", err
+		return "", "", err
 	}
 
 	extraAmount := int64(0)
@@ -145,11 +151,20 @@ func (t *Trans) transfer(to, amount, fee, desc, hdPublicKey string) (string, err
 	// preExe
 	preExeWithSelRes, err := t.PreExecWithSelecUTXO()
 	if err != nil {
-		log.Printf("Transfer PreExecWithSelecUTXO failed, err: %v", err)
-		return "", err
+		// 判断是否是手续费不够引起的错误
+		if !strings.Contains(err.Error(), common.ErrNeedInputFee) {
+			log.Printf("Transfer PreExecWithSelecUTXO failed, err: %v", err)
+			return "", fee, err
+		}
+
+		// 获取手续费，重新转账
+		errs := strings.Split(err.Error(), " ")
+		fee = errs[len(errs)-1]
+		return t.Transfer(to, amount, fee, desc)
 	}
+
 	if preExeWithSelRes.Response == nil {
-		return "", errors.New("preExe return nil")
+		return "", "", errors.New("preExe return nil")
 	}
 
 	// populates fields
@@ -177,7 +192,8 @@ func (t *Trans) transfer(to, amount, fee, desc, hdPublicKey string) (string, err
 	t.AuthRequire = invokeRPCReq.AuthRequire
 
 	// post
-	return t.GenCompleteTxAndPost(preExeWithSelRes, hdPublicKey)
+	txid, err := t.GenCompleteTxAndPost(preExeWithSelRes, hdPublicKey)
+	return txid, fee, err
 }
 
 // Transfer transfer 'amount' to 'to',and pay 'fee' to miner
