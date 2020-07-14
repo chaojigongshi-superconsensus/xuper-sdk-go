@@ -20,6 +20,7 @@ var (
 	ErrAmountNotEnough = errors.New("Amount must be bigger than compliancecheck fee which is 10")
 )
 
+// todo 删除转账的错误判断 加入acl的操作
 const (
 	ErrNeedInputFee = "need input fee"
 )
